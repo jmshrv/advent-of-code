@@ -34,7 +34,7 @@ fn main() {
     let top_three: Vec<usize> = inventories
         .iter()
         .map(|x| x.iter().sum::<usize>())
-        .sorted()
+        .sorted_unstable()
         .rev()
         .take(3)
         .collect();
