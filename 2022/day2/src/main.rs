@@ -22,6 +22,25 @@ impl TryFrom<char> for Play {
     }
 }
 
+impl From<(Play, Outcome)> for Play {
+    fn from(play: (Play, Outcome)) -> Self {
+        let (opponent, outcome) = play;
+        match outcome {
+            Outcome::Win => match opponent {
+                Play::Rock => Self::Paper,
+                Play::Paper => Self::Scisors,
+                Play::Scisors => Self::Rock,
+            },
+            Outcome::Draw => opponent,
+            Outcome::Loss => match opponent {
+                Play::Rock => Self::Scisors,
+                Play::Paper => Self::Rock,
+                Play::Scisors => Self::Paper,
+            },
+        }
+    }
+}
+
 impl Play {
     fn score(self, play: Play) -> usize {
         let outcome = Outcome::from((self, play));
@@ -30,6 +49,7 @@ impl Play {
     }
 }
 
+#[derive(Clone, Copy)]
 enum Outcome {
     Win = 6,
     Draw = 3,
@@ -50,12 +70,25 @@ impl From<(Play, Play)> for Outcome {
     }
 }
 
+impl TryFrom<char> for Outcome {
+    type Error = ();
+
+    fn try_from(value: char) -> Result<Self, Self::Error> {
+        match value {
+            'X' => Ok(Self::Loss),
+            'Y' => Ok(Self::Draw),
+            'Z' => Ok(Self::Win),
+            _ => Err(()),
+        }
+    }
+}
+
 fn main() {
-    let input: Vec<(Play, Play)> = io::stdin()
-        .lines()
+    let lines = io::stdin().lines().map(|x| x.unwrap()).collect_vec();
+    let input_one: Vec<(Play, Play)> = lines
+        .iter()
         .map(|x| {
-            x.unwrap()
-                .split(' ')
+            x.split(' ')
                 .take(2)
                 .map(|y| Play::try_from(y.chars().next().unwrap()).unwrap())
                 .collect_tuple()
@@ -63,7 +96,26 @@ fn main() {
         })
         .collect();
 
-    let score: usize = input.iter().map(|x| x.0.score(x.1)).sum();
+    let score_part_1: usize = input_one.iter().map(|x| x.0.score(x.1)).sum();
 
-    println!("{}", score);
+    let input_two: Vec<(Play, Outcome)> = lines
+        .iter()
+        .map(|x| {
+            x.split(' ')
+                .take(2)
+                .collect_tuple::<(&str, &str)>()
+                .map(|y| {
+                    (
+                        Play::try_from(y.0.chars().next().unwrap()).unwrap(),
+                        Outcome::try_from(y.1.chars().next().unwrap()).unwrap(),
+                    )
+                })
+                .unwrap()
+        })
+        .collect();
+
+    let score_part_2: usize = input_two.iter().map(|x| x.0.score(Play::from(*x))).sum();
+
+    println!("{}", score_part_1);
+    println!("{}", score_part_2);
 }
