@@ -6,18 +6,21 @@ use std::{
 
 use itertools::Itertools;
 
-fn duplicates(halves: (&str, &str)) -> HashSet<char> {
-    let mut duplicates = HashSet::new();
+fn duplicates(backpacks: &[String]) -> HashSet<char> {
+    let mut unique_characters: HashMap<char, usize> = HashMap::new();
 
-    for left_char in halves.0.chars() {
-        for right_char in halves.1.chars() {
-            if left_char == right_char {
-                duplicates.insert(left_char);
-            }
+    for backpack in backpacks {
+        for char in backpack.chars().unique() {
+            let count = *unique_characters.get(&char).unwrap_or(&0);
+            unique_characters.insert(char, count + 1);
         }
     }
 
-    duplicates
+    unique_characters
+        .iter()
+        .filter(|item| *item.1 == backpacks.len())
+        .map(|kv| *kv.0)
+        .collect()
 }
 
 trait Priority {
@@ -36,31 +39,6 @@ impl Priority for char {
     }
 }
 
-trait SingleOccurance {
-    fn single_occurance(self) -> Vec<char>;
-}
-
-impl SingleOccurance for Chars<'_> {
-    fn single_occurance(self) -> Vec<char> {
-        let mut occurances: HashMap<char, usize> = HashMap::new();
-
-        for char in self {
-            if occurances.contains_key(&char) {
-                let value = occurances.get(&char).unwrap();
-                occurances.insert(char, value + 1);
-            } else {
-                occurances.insert(char, 1);
-            }
-        }
-
-        occurances
-            .iter()
-            .filter(|character| *character.1 == 1)
-            .map(|tuple| *tuple.0)
-            .collect()
-    }
-}
-
 fn main() {
     let input: Vec<_> = io::stdin().lines().map(|line| line.unwrap()).collect();
 
@@ -68,7 +46,7 @@ fn main() {
         .iter()
         .map(|line| {
             let halves = line.split_at(line.chars().count() / 2);
-            duplicates(halves)
+            duplicates(&[halves.0.to_string(), halves.1.to_string()])
                 .iter()
                 .map(|y| y.priority() as u32)
                 .sum::<u32>()
@@ -77,13 +55,10 @@ fn main() {
 
     let priority_sum_part_2: u32 = input
         .chunks_exact(3)
-        .map(|chunk| chunk.join(""))
-        .map(|combined_chunk| {
-            combined_chunk
-                .chars()
-                .single_occurance()
+        .map(|chunk| {
+            duplicates(chunk)
                 .iter()
-                .map(|char| char.priority() as u32)
+                .map(|y| y.priority() as u32)
                 .sum::<u32>()
         })
         .sum();
