@@ -31,17 +31,20 @@ impl Priority for char {
 }
 
 fn main() {
-    let priority_sum = io::stdin()
-        .lines()
-        .map(|x| {
-            let line = x.unwrap();
+    let input: Vec<_> = io::stdin().lines().map(|line| line.unwrap()).collect();
+
+    let priority_sum_part_1: u32 = input
+        .iter()
+        .map(|line| {
             let halves = line.split_at(line.chars().count() / 2);
             duplicates(halves)
                 .iter()
                 .map(|y| y.priority() as u32)
                 .sum::<u32>()
         })
-        .sum::<u32>();
+        .sum();
 
-    println!("{}", priority_sum);
+    let priority_sum_part_2: u32 = input.chunks_exact(3).map(|chunk| {});
+
+    println!("{}", priority_sum_part_1);
 }
