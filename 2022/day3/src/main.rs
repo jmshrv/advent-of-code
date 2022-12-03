@@ -1,4 +1,10 @@
-use std::{collections::HashSet, io};
+use std::{
+    collections::{HashMap, HashSet},
+    io,
+    str::Chars,
+};
+
+use itertools::Itertools;
 
 fn duplicates(halves: (&str, &str)) -> HashSet<char> {
     let mut duplicates = HashSet::new();
@@ -30,6 +36,31 @@ impl Priority for char {
     }
 }
 
+trait SingleOccurance {
+    fn single_occurance(self) -> Vec<char>;
+}
+
+impl SingleOccurance for Chars<'_> {
+    fn single_occurance(self) -> Vec<char> {
+        let mut occurances: HashMap<char, usize> = HashMap::new();
+
+        for char in self {
+            if occurances.contains_key(&char) {
+                let value = occurances.get(&char).unwrap();
+                occurances.insert(char, value + 1);
+            } else {
+                occurances.insert(char, 1);
+            }
+        }
+
+        occurances
+            .iter()
+            .filter(|character| *character.1 == 1)
+            .map(|tuple| *tuple.0)
+            .collect()
+    }
+}
+
 fn main() {
     let input: Vec<_> = io::stdin().lines().map(|line| line.unwrap()).collect();
 
@@ -44,7 +75,19 @@ fn main() {
         })
         .sum();
 
-    let priority_sum_part_2: u32 = input.chunks_exact(3).map(|chunk| {});
+    let priority_sum_part_2: u32 = input
+        .chunks_exact(3)
+        .map(|chunk| chunk.join(""))
+        .map(|combined_chunk| {
+            combined_chunk
+                .chars()
+                .single_occurance()
+                .iter()
+                .map(|char| char.priority() as u32)
+                .sum::<u32>()
+        })
+        .sum();
 
     println!("{}", priority_sum_part_1);
+    println!("{}", priority_sum_part_2);
 }
