@@ -23,14 +23,7 @@ fn intersect(a: &Range<u8>, b: &Range<u8>) -> Range<u8> {
 }
 
 fn any_intersect(a: &Range<u8>, b: &Range<u8>) -> bool {
-    // Need to add 1 to get last val in HashSet
-    let new_a = a.start..a.end + 1;
-    let new_b = b.start..b.end + 1;
-
-    let new_a_map: HashSet<_> = new_a.collect();
-    let new_b_map: HashSet<_> = new_b.collect();
-
-    new_a_map.intersection(&new_b_map).count() != 0
+    !(a.end < b.start || a.start > b.end)
 }
 
 fn main() {
