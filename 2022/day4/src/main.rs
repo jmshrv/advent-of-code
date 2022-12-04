@@ -2,7 +2,6 @@
 
 use std::{
     cmp::{max, min},
-    collections::HashSet,
     io,
     ops::Range,
 };
