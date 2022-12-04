@@ -2,7 +2,7 @@
 
 use std::{
     cmp::{max, min},
-    collections::{HashMap, HashSet},
+    collections::HashSet,
     io,
     ops::Range,
 };
