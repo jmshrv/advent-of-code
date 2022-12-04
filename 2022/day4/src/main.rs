@@ -2,11 +2,10 @@
 
 use std::{
     cmp::{max, min},
+    collections::{HashMap, HashSet},
     io,
     ops::Range,
 };
-
-use range_ext::intersect::Intersect;
 
 fn range_from_string(input: &str) -> Range<u8> {
     let (start_str, end_str) = input.split_once('-').unwrap();
@@ -23,9 +22,18 @@ fn intersect(a: &Range<u8>, b: &Range<u8>) -> Range<u8> {
     max(a.start, b.start)..min(a.end, b.end)
 }
 
-fn main() {
-    let misc = intersect(&(1..3), &(5..7));
+fn any_intersect(a: &Range<u8>, b: &Range<u8>) -> bool {
+    // Need to add 1 to get last val in HashSet
+    let new_a = a.start..a.end + 1;
+    let new_b = b.start..b.end + 1;
 
+    let new_a_map: HashSet<_> = new_a.collect();
+    let new_b_map: HashSet<_> = new_b.collect();
+
+    new_a_map.intersection(&new_b_map).count() != 0
+}
+
+fn main() {
     let input: Vec<_> = io::stdin()
         .lines()
         .map(|line_res| {
@@ -46,7 +54,11 @@ fn main() {
         })
         .count();
 
-    let answer_2 = input.iter().filter(|pair| min(pair.0.start)).count();
+    let answer_2 = input
+        .iter()
+        .filter(|pair| any_intersect(&pair.0, &pair.1))
+        .count();
 
     println!("{}", answer_1);
+    println!("{}", answer_2);
 }
