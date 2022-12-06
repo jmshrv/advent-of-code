@@ -1,4 +1,4 @@
-use std::io;
+use std::{collections::HashSet, io};
 
 use itertools::Itertools;
 
@@ -26,5 +26,14 @@ fn main() {
         .0
         + 4;
 
+    let answer_2 = input
+        .as_bytes()
+        .windows(14)
+        .find_position(|window| window.iter().collect::<HashSet<_>>().len() == 14)
+        .unwrap()
+        .0
+        + 14;
+
     println!("{}", answer_1);
+    println!("{}", answer_2);
 }
