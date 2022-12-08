@@ -4,28 +4,11 @@ use std::{
     io,
 };
 
-struct File {
-    name: String,
-    size: usize,
-}
-
-impl Hash for File {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.name.hash(state);
-    }
-}
-
-impl PartialEq for File {
-    fn eq(&self, other: &Self) -> bool {
-        self.name == other.name
-    }
-}
-
-impl Eq for File {}
-
+#[derive(Clone)]
 struct Directory {
     name: String,
-    children: HashSet<Element>,
+    size: usize,
+    children: Vec<Directory>,
 }
 
 impl Hash for Directory {
@@ -46,19 +29,20 @@ impl Directory {
     fn new(name: String) -> Directory {
         Directory {
             name: name,
-            children: HashSet::new(),
+            size: 0,
+            children: Vec::new(),
         }
     }
 
-    fn get_child(self, name: String) -> Option<&'static Element> {
-        self.children.get(&Element::Directory(Directory::new(name)))
-    }
-}
+    fn get_child(&mut self, name: String) -> Option<&mut Directory> {
+        for child in self.children.iter_mut() {
+            if child.name == name {
+                return Some(child);
+            }
+        }
 
-#[derive(Eq, Hash, PartialEq)]
-enum Element {
-    File(File),
-    Directory(Directory),
+        None
+    }
 }
 
 fn main() {
@@ -69,22 +53,25 @@ fn main() {
         .collect();
 
     let mut fs_tree = Directory::new("/".to_string());
-    let mut cur_dir_stack = vec![&fs_tree];
+    let mut cur_dir_stack = vec![&mut fs_tree];
 
     for line in input {
-        let cur_dir = cur_dir_stack.last_mut().unwrap();
+        let mut cur_dir = cur_dir_stack.last_mut().unwrap();
 
         // Directory
         if line.starts_with("dir") {
             let dir_name = line.split(' ').last().unwrap();
-            cur_dir
-                .children
-                .insert(Element::Directory(Directory::new(dir_name.to_string())));
+            cur_dir.children.push(Directory::new(dir_name.to_string()));
         }
         // Change directory
         else if line.starts_with("$ cd") {
-            let dest_name = line.split(' ').last().unwrap();
-            if let Element::Directory(dest) = cur_dir.get_child(dest_name.to_string()).unwrap() {
+            if line == "$ cd .." {
+                cur_dir_stack.pop();
+                cur_dir = cur_dir_stack.last_mut().unwrap();
+            } else {
+                let dest_name = line.split(' ').last().unwrap();
+                let dest = cur_dir.clone().get_child(dest_name.to_string()).unwrap();
+
                 cur_dir_stack.push(dest);
             }
         }
@@ -94,10 +81,7 @@ fn main() {
         // File
         else {
             let (size_str, name) = line.split_once(' ').unwrap();
-            cur_dir.children.insert(Element::File(File {
-                name: name.to_string(),
-                size: size_str.parse().unwrap(),
-            }));
+            cur_dir.size += size_str.parse::<usize>().unwrap();
         }
     }
 
