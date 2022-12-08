@@ -1,65 +1,11 @@
 use std::{
-    collections::{HashMap, HashSet, VecDeque},
-    hash::{Hash, Hasher},
+    collections::HashMap,
+    env,
+    fs::{self, File},
     io,
 };
 
-struct File {
-    name: String,
-    size: usize,
-}
-
-impl Hash for File {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.name.hash(state);
-    }
-}
-
-impl PartialEq for File {
-    fn eq(&self, other: &Self) -> bool {
-        self.name == other.name
-    }
-}
-
-impl Eq for File {}
-
-struct Directory {
-    name: String,
-    children: HashSet<Element>,
-}
-
-impl Hash for Directory {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.name.hash(state);
-    }
-}
-
-impl PartialEq for Directory {
-    fn eq(&self, other: &Self) -> bool {
-        self.name == other.name
-    }
-}
-
-impl Eq for Directory {}
-
-impl Directory {
-    fn new(name: String) -> Directory {
-        Directory {
-            name: name,
-            children: HashSet::new(),
-        }
-    }
-
-    fn get_child(self, name: String) -> Option<&'static Element> {
-        self.children.get(&Element::Directory(Directory::new(name)))
-    }
-}
-
-#[derive(Eq, Hash, PartialEq)]
-enum Element {
-    File(File),
-    Directory(Directory),
-}
+use walkdir::WalkDir;
 
 fn main() {
     let input: Vec<_> = io::stdin()
@@ -68,38 +14,68 @@ fn main() {
         .skip(2) // Don't care about initial cd and ls
         .collect();
 
-    let mut fs_tree = Directory::new("/".to_string());
-    let mut cur_dir_stack = vec![&fs_tree];
+    let start_dir = env::current_dir().unwrap();
 
     for line in input {
-        let cur_dir = cur_dir_stack.last_mut().unwrap();
-
-        // Directory
         if line.starts_with("dir") {
             let dir_name = line.split(' ').last().unwrap();
-            cur_dir
-                .children
-                .insert(Element::Directory(Directory::new(dir_name.to_string())));
-        }
-        // Change directory
-        else if line.starts_with("$ cd") {
+            fs::create_dir(dir_name).unwrap();
+        } else if line.starts_with("$ cd") {
             let dest_name = line.split(' ').last().unwrap();
-            if let Element::Directory(dest) = cur_dir.get_child(dest_name.to_string()).unwrap() {
-                cur_dir_stack.push(dest);
-            }
-        }
-        // We don't care about ls
-        else if line == "$ ls" {
-        }
-        // File
-        else {
+            env::set_current_dir(dest_name).unwrap();
+        } else if line == "$ ls" {
+        } else {
             let (size_str, name) = line.split_once(' ').unwrap();
-            cur_dir.children.insert(Element::File(File {
-                name: name.to_string(),
-                size: size_str.parse().unwrap(),
-            }));
+            let name_fmt = format!("{}-{}", name, size_str);
+            File::create(name_fmt).unwrap();
         }
     }
 
-    println!("hi");
+    let mut directories: HashMap<String, usize> = HashMap::new();
+
+    for entry_res in WalkDir::new(start_dir) {
+        let entry = entry_res.unwrap();
+        println!("{}", entry.path().to_str().unwrap());
+
+        if entry.file_type().is_file() {
+            let name = entry.file_name();
+            let path = entry.path().parent().unwrap().to_str().unwrap().to_string();
+
+            let size: usize = name
+                .to_str()
+                .unwrap()
+                .split("-")
+                .last()
+                .unwrap()
+                .parse()
+                .unwrap();
+
+            directories
+                .entry(path)
+                .and_modify(|val| *val += size)
+                .or_insert(size);
+
+            let mut parent = entry.path().parent().unwrap();
+            while let Some(new_parent) = parent.parent() {
+                parent = new_parent;
+                let parent_path = parent.to_str().unwrap().to_string();
+
+                directories
+                    .entry(parent_path)
+                    .and_modify(|val| *val += size);
+            }
+        }
+    }
+
+    let answer_1: usize = directories
+        .iter()
+        .map(|x| x.1)
+        .filter(|x| x <= &&100000)
+        .sum();
+
+    println!(
+        "{:?}",
+        directories.iter().map(|x| x.1).filter(|x| x <= &&100000)
+    );
+    println!("{}", answer_1);
 }
