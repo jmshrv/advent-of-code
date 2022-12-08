@@ -34,9 +34,8 @@ fn main() {
 
     let mut directories: HashMap<String, usize> = HashMap::new();
 
-    for entry_res in WalkDir::new(start_dir) {
+    for entry_res in WalkDir::new(start_dir.clone()) {
         let entry = entry_res.unwrap();
-        println!("{}", entry.path().to_str().unwrap());
 
         if entry.file_type().is_file() {
             let name = entry.file_name();
@@ -56,30 +55,15 @@ fn main() {
                 .and_modify(|val| *val += size)
                 .or_insert(size);
 
-            // let mut parent = entry.path().parent().unwrap();
-            // while let Some(new_parent) = parent.parent() {
-            //     parent = new_parent;
-            //     let parent_path = parent.to_str().unwrap().to_string();
+            let mut parent = entry.path().parent().unwrap();
+            while let Some(new_parent) = parent.parent() {
+                parent = new_parent;
+                let parent_path = parent.to_str().unwrap().to_string();
 
-            //     directories
-            //         .entry(parent_path)
-            //         .and_modify(|val| *val += size);
-            // }
-        }
-    }
-
-    for directory in directories.keys() {
-        let size = directories.get(directory).unwrap();
-        let path = Path::new(&directory);
-
-        let mut parent = path.parent().unwrap();
-        while let Some(new_parent) = parent.parent() {
-            parent = new_parent;
-            let parent_path = parent.to_str().unwrap().to_string();
-
-            directories
-                .entry(parent_path)
-                .and_modify(|val| *val += size);
+                directories
+                    .entry(parent_path)
+                    .and_modify(|val| *val += size);
+            }
         }
     }
 
@@ -89,9 +73,5 @@ fn main() {
         .filter(|x| x <= &&100000)
         .sum();
 
-    println!(
-        "{:?}",
-        directories.iter().map(|x| x.1).filter(|x| x <= &&100000)
-    );
     println!("{}", answer_1);
 }
