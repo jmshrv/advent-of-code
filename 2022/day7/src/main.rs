@@ -3,6 +3,7 @@ use std::{
     env,
     fs::{self, File},
     io,
+    path::Path,
 };
 
 use walkdir::WalkDir;
@@ -55,15 +56,30 @@ fn main() {
                 .and_modify(|val| *val += size)
                 .or_insert(size);
 
-            let mut parent = entry.path().parent().unwrap();
-            while let Some(new_parent) = parent.parent() {
-                parent = new_parent;
-                let parent_path = parent.to_str().unwrap().to_string();
+            // let mut parent = entry.path().parent().unwrap();
+            // while let Some(new_parent) = parent.parent() {
+            //     parent = new_parent;
+            //     let parent_path = parent.to_str().unwrap().to_string();
 
-                directories
-                    .entry(parent_path)
-                    .and_modify(|val| *val += size);
-            }
+            //     directories
+            //         .entry(parent_path)
+            //         .and_modify(|val| *val += size);
+            // }
+        }
+    }
+
+    for directory in directories.keys() {
+        let size = directories.get(directory).unwrap();
+        let path = Path::new(&directory);
+
+        let mut parent = path.parent().unwrap();
+        while let Some(new_parent) = parent.parent() {
+            parent = new_parent;
+            let parent_path = parent.to_str().unwrap().to_string();
+
+            directories
+                .entry(parent_path)
+                .and_modify(|val| *val += size);
         }
     }
 
