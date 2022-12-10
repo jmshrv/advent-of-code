@@ -1,4 +1,4 @@
-use std::{collections::HashSet, io};
+use std::{borrow::BorrowMut, collections::HashSet, io};
 
 fn pos_diff(head_pos: (i32, i32), tail_pos: (i32, i32)) -> (i32, i32) {
     (head_pos.0 - tail_pos.0, head_pos.1 - tail_pos.1)
@@ -38,13 +38,9 @@ fn move_tail(head_pos: (i32, i32), tail_pos: (i32, i32)) -> (i32, i32) {
         // Diagonal, need to move both
         let (x_diff, y_diff) = pos_diff(head_pos, tail_pos);
 
-        let res = if y_diff == 1 || y_diff == -1 {
-            (tail_pos.0, tail_pos.1 + y_diff)
-        } else {
-            (tail_pos.0 + x_diff, tail_pos.1)
-        };
+        let res = (tail_pos.0 + x_diff.signum(), tail_pos.1 + y_diff.signum());
 
-        return move_tail(head_pos, res);
+        return res;
     }
 }
 
@@ -94,7 +90,7 @@ fn main() {
 
     let mut part1_visited: HashSet<(i32, i32)> = HashSet::from([(0, 0)]);
 
-    for line in input {
+    for line in &input {
         for _ in 0..line.1 {
             match line.0 {
                 'U' => part1_head_pos.1 += 1,
@@ -112,4 +108,51 @@ fn main() {
     }
 
     println!("{}", part1_visited.len());
+
+    let mut ropes = [
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+    ];
+
+    let mut part2_visited: HashSet<(i32, i32)> = HashSet::from([(0, 0)]);
+
+    for line in input {
+        for _ in 0..line.1 {
+            let mut head = ropes[0];
+
+            match line.0 {
+                'U' => head.1 += 1,
+                'D' => head.1 -= 1,
+                'L' => head.0 -= 1,
+                'R' => head.0 += 1,
+                _ => panic!("Unexpected direction {}", line.0),
+            }
+
+            ropes[0] = head;
+
+            for i in 0..ropes.len() - 1 {
+                let (primary, mut secondary) = (ropes[i], ropes[i + 1]);
+
+                if !is_touching(primary, secondary) {
+                    let movement_res = move_tail(primary, secondary);
+                    secondary = movement_res;
+                }
+
+                ropes[i] = primary;
+                ropes[i + 1] = secondary;
+            }
+
+            part2_visited.insert(*ropes.last().unwrap());
+        }
+    }
+
+    println!("{}", part2_visited.len());
 }

@@ -22,7 +22,7 @@
             "args": [],
             "cwd": "${workspaceFolder}",
             "stdio": [
-                "src/example_input.txt",
+                "src/input.txt",
                 null,
                 null
             ]
