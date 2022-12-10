@@ -119,7 +119,6 @@ fn main() {
                     secondary = movement_res;
                 }
 
-                ropes[i] = primary;
                 ropes[i + 1] = secondary;
             }
 
