@@ -13,35 +13,8 @@ fn is_touching(head_pos: (i32, i32), tail_pos: (i32, i32)) -> bool {
 fn move_tail(head_pos: (i32, i32), tail_pos: (i32, i32)) -> (i32, i32) {
     debug_assert_eq!(is_touching(head_pos, tail_pos), false);
 
-    if head_pos.0 == tail_pos.0 {
-        // Same X pos, need to move up/down
-
-        let res = if head_pos.1 > tail_pos.1 {
-            (tail_pos.0, tail_pos.1 + 1)
-        } else {
-            (tail_pos.0, tail_pos.1 - 1)
-        };
-
-        debug_assert!(is_touching(head_pos, res));
-        return res;
-    } else if head_pos.1 == tail_pos.1 {
-        // Same Y pos, need to move left/right
-        let res = if head_pos.0 > tail_pos.0 {
-            (tail_pos.0 + 1, tail_pos.1)
-        } else {
-            (tail_pos.0 - 1, tail_pos.1)
-        };
-
-        debug_assert!(is_touching(head_pos, res));
-        return res;
-    } else {
-        // Diagonal, need to move both
-        let (x_diff, y_diff) = pos_diff(head_pos, tail_pos);
-
-        let res = (tail_pos.0 + x_diff.signum(), tail_pos.1 + y_diff.signum());
-
-        return res;
-    }
+    let (x_diff, y_diff) = pos_diff(head_pos, tail_pos);
+    return (tail_pos.0 + x_diff.signum(), tail_pos.1 + y_diff.signum());
 }
 
 #[cfg(test)]
