@@ -1,4 +1,4 @@
-use std::{borrow::BorrowMut, collections::HashSet, io};
+use std::{collections::HashSet, io};
 
 fn pos_diff(head_pos: (i32, i32), tail_pos: (i32, i32)) -> (i32, i32) {
     (head_pos.0 - tail_pos.0, head_pos.1 - tail_pos.1)
