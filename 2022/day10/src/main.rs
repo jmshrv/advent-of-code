@@ -128,47 +128,26 @@ fn main() {
 
     let cpu_2 = CPU::new(input);
 
-    let mut lit_pixels = [
-        [
-            false, false, false, false, false, false, false, false, false, false, false, false,
-            false, false, false, false, false, false, false, false, false, false, false, false,
-            false, false, false, false, false, false, false, false, false, false, false, false,
-            false, false, false, false,
-        ],
-        [
-            false, false, false, false, false, false, false, false, false, false, false, false,
-            false, false, false, false, false, false, false, false, false, false, false, false,
-            false, false, false, false, false, false, false, false, false, false, false, false,
-            false, false, false, false,
-        ],
-        [
-            false, false, false, false, false, false, false, false, false, false, false, false,
-            false, false, false, false, false, false, false, false, false, false, false, false,
-            false, false, false, false, false, false, false, false, false, false, false, false,
-            false, false, false, false,
-        ],
-        [
-            false, false, false, false, false, false, false, false, false, false, false, false,
-            false, false, false, false, false, false, false, false, false, false, false, false,
-            false, false, false, false, false, false, false, false, false, false, false, false,
-            false, false, false, false,
-        ],
-        [
-            false, false, false, false, false, false, false, false, false, false, false, false,
-            false, false, false, false, false, false, false, false, false, false, false, false,
-            false, false, false, false, false, false, false, false, false, false, false, false,
-            false, false, false, false,
-        ],
-        [
-            false, false, false, false, false, false, false, false, false, false, false, false,
-            false, false, false, false, false, false, false, false, false, false, false, false,
-            false, false, false, false, false, false, false, false, false, false, false, false,
-            false, false, false, false,
-        ],
-    ];
+    let mut lit_pixels = [false; 240];
+
+    lit_pixels[0] = true; // Needed to fill in for first instruction
 
     cpu_2.into_iter().for_each(|registers| {
-        let index = registers
-        lit_pixels.insert(registers.x);
+        let diff = (registers.cycles % 40) as i32 - registers.x;
+        if diff >= -1 && diff <= 1 {
+            let index = registers.cycles;
+            lit_pixels[registers.cycles] = true;
+        }
+    });
+
+    lit_pixels.chunks(40).for_each(|line| {
+        for pixel in line {
+            if *pixel {
+                print!("█");
+            } else {
+                print!(" ");
+            }
+        }
+        println!();
     });
 }
