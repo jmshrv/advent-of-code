@@ -111,10 +111,7 @@ fn parse_operation(operation: &str) -> Box<WorryOp> {
         Some(right_str.parse().unwrap())
     };
 
-    Box::new(move |old| {
-        let old_relief = (old as f64 / 3.0).floor() as WorryLevel;
-        operator.eval(left.unwrap_or(old_relief), right.unwrap_or(old_relief))
-    })
+    Box::new(move |old| operator.eval(left.unwrap_or(old), right.unwrap_or(old)) / 3)
 }
 
 struct Monkey {
@@ -153,10 +150,12 @@ impl FromStr for Monkey {
 }
 
 impl Monkey {
-    fn play(&self) -> HashMap<usize, Vec<WorryLevel>> {
+    fn play(&mut self) -> HashMap<usize, Vec<WorryLevel>> {
         let mut destinations: HashMap<usize, Vec<WorryLevel>> = HashMap::new();
-        for item in &self.items {
-            let new_worry = (self.operation)(*item);
+
+        for item in self.items.drain(..) {
+            self.inspect_count += 1;
+            let new_worry = (self.operation)(item);
             let destination = self.test.eval(new_worry);
 
             destinations
@@ -176,12 +175,23 @@ fn main() {
         .collect();
 
     for _ in 0..20 {
-        for monkey in &input {
+        for i in 0..input.len() {
+            let monkey = &mut input[i];
+
             let new_dests = monkey.play();
 
             for mut dest in new_dests {
-                input[dest.0 - 1].items.append(&mut dest.1);
+                input[dest.0].items.append(&mut dest.1);
             }
         }
     }
+
+    let answer_1: usize = input
+        .iter()
+        .sorted_by(|a, b| Ord::cmp(&b.inspect_count, &a.inspect_count))
+        .take(2)
+        .map(|monkey| monkey.inspect_count)
+        .product();
+
+    println!("{}", answer_1);
 }
