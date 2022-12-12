@@ -1,4 +1,4 @@
-use std::{collections::HashMap, io, str::FromStr};
+use std::{collections::HashMap, str::FromStr};
 
 use itertools::Itertools;
 
@@ -32,7 +32,7 @@ impl Operator {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 struct WorryTest {
     divisible: WorryLevel,
     if_true_dest: usize,
@@ -111,7 +111,7 @@ fn parse_operation(operation: &str) -> Box<WorryOp> {
         Some(right_str.parse().unwrap())
     };
 
-    Box::new(move |old| operator.eval(left.unwrap_or(old), right.unwrap_or(old)) / 3)
+    Box::new(move |old| operator.eval(left.unwrap_or(old), right.unwrap_or(old)))
 }
 
 struct Monkey {
@@ -150,12 +150,22 @@ impl FromStr for Monkey {
 }
 
 impl Monkey {
-    fn play(&mut self) -> HashMap<usize, Vec<WorryLevel>> {
+    fn play(
+        &mut self,
+        relief: bool,
+        common_multiple: WorryLevel,
+    ) -> HashMap<usize, Vec<WorryLevel>> {
         let mut destinations: HashMap<usize, Vec<WorryLevel>> = HashMap::new();
 
         for item in self.items.drain(..) {
             self.inspect_count += 1;
-            let new_worry = (self.operation)(item);
+
+            let new_worry = if relief {
+                (self.operation)(item) / 3
+            } else {
+                (self.operation)(item) % common_multiple
+            };
+
             let destination = self.test.eval(new_worry);
 
             destinations
@@ -169,24 +179,35 @@ impl Monkey {
 }
 
 fn main() {
-    let mut input: Vec<Monkey> = include_str!("input.txt")
+    let mut monkeys_1: Vec<Monkey> = include_str!("input.txt")
         .split("\n\n")
         .map(|monkey_text| monkey_text.parse().unwrap())
         .collect();
 
-    for _ in 0..20 {
-        for i in 0..input.len() {
-            let monkey = &mut input[i];
+    // Monkey doesn't implement clone
+    let mut monkeys_2: Vec<Monkey> = include_str!("input.txt")
+        .split("\n\n")
+        .map(|monkey_text| monkey_text.parse().unwrap())
+        .collect();
 
-            let new_dests = monkey.play();
+    let common_multiple: WorryLevel = monkeys_2
+        .iter()
+        .map(|monkey| monkey.test.divisible)
+        .product();
+
+    for _ in 0..20 {
+        for i in 0..monkeys_1.len() {
+            let monkey = &mut monkeys_1[i];
+
+            let new_dests = monkey.play(true, common_multiple);
 
             for mut dest in new_dests {
-                input[dest.0].items.append(&mut dest.1);
+                monkeys_1[dest.0].items.append(&mut dest.1);
             }
         }
     }
 
-    let answer_1: usize = input
+    let answer_1: usize = monkeys_1
         .iter()
         .sorted_by(|a, b| Ord::cmp(&b.inspect_count, &a.inspect_count))
         .take(2)
@@ -194,4 +215,25 @@ fn main() {
         .product();
 
     println!("{}", answer_1);
+
+    for _ in 0..10000 {
+        for i in 0..monkeys_2.len() {
+            let monkey = &mut monkeys_2[i];
+
+            let new_dests = monkey.play(false, common_multiple);
+
+            for mut dest in new_dests {
+                monkeys_2[dest.0].items.append(&mut dest.1);
+            }
+        }
+    }
+
+    let answer_2: usize = monkeys_2
+        .iter()
+        .sorted_by(|a, b| Ord::cmp(&b.inspect_count, &a.inspect_count))
+        .take(2)
+        .map(|monkey| monkey.inspect_count)
+        .product();
+
+    println!("{}", answer_2);
 }
