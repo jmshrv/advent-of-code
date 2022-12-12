@@ -1,6 +1,10 @@
-use std::io;
+use std::{
+    io,
+    sync::{atomic::AtomicUsize, Mutex},
+};
 
 use pathfinding::prelude::bfs;
+use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
 fn find_char(map: &Vec<String>, target: char) -> Vec<(usize, usize)> {
     let mut cells = Vec::new();
@@ -97,15 +101,18 @@ fn main() {
 
     let eligible_stars = find_char(&input, 'a');
 
-    let mut result_2: Option<Vec<(usize, usize)>> = None;
+    // let mut result_2: Mutex<Option<Vec<(usize, usize)>>> = Mutex::new(None);
+    // let mut result_2: AtomicUsize = AtomicUsize::new(0);
 
-    for start in eligible_stars {
-        if let Some(candidate) = bfs(&start, |p| get_neighbours(&input, *p), |p| *p == *end) {
-            if result_2.is_none() || result_2.clone().unwrap().len() > candidate.len() {
-                result_2 = Some(candidate);
-            }
-        }
-    }
+    let result_2 = eligible_stars
+        .par_iter()
+        .map(|start| bfs(start, |p| get_neighbours(&input, *p), |p| *p == *end))
+        .filter_map(|path_res| match path_res {
+            Some(path) => Some(path.len()),
+            None => None,
+        })
+        .min()
+        .unwrap();
 
-    println!("{}", result_2.unwrap().len() - 1);
+    println!("{}", result_2 - 1);
 }
