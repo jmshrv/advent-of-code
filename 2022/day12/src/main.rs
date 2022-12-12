@@ -101,9 +101,8 @@ fn main() {
 
     let eligible_stars = find_char(&input, 'a');
 
-    // let mut result_2: Mutex<Option<Vec<(usize, usize)>>> = Mutex::new(None);
-    // let mut result_2: AtomicUsize = AtomicUsize::new(0);
-
+    // If you're clever you can just do a single search from the end to any "a"
+    // point, but this is cooler and shows off Fearless Concurrency™️
     let result_2 = eligible_stars
         .par_iter()
         .map(|start| bfs(start, |p| get_neighbours(&input, *p), |p| *p == *end))
