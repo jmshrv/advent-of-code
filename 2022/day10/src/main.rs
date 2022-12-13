@@ -135,7 +135,6 @@ fn main() {
     cpu_2.into_iter().for_each(|registers| {
         let diff = (registers.cycles % 40) as i32 - registers.x;
         if diff >= -1 && diff <= 1 {
-            let index = registers.cycles;
             lit_pixels[registers.cycles] = true;
         }
     });
